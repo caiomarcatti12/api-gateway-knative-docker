@@ -1,0 +1,8 @@
+routes:
+  - path: "/header"
+    service: "meu-nginx"
+    port: 8081
+    ttl: 10
+    retry: 3
+    retryDelay: 5
+    healthPath: /
