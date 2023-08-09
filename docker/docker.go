@@ -43,6 +43,7 @@ func StartContainer(route config.Route) (bool, error) {
 		}
 	}
 
+	updateLastAccessRequestContainer(route)
 	return true, nil
 }
 
@@ -100,4 +101,12 @@ func checkHealth(route config.Route) bool {
 	}
 
 	return false
+}
+func updateLastAccessRequestContainer(route config.Route) {
+	containerStore := GetContainerStore()
+	containerService, exists := containerStore.GetByService(route.Service)
+
+	if exists {
+		containerStore.UpdateAccessTime(containerService.ID, time.Now())
+	}
 }
