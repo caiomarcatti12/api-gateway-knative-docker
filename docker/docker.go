@@ -73,7 +73,7 @@ func StopContainer(containerID string) {
 func isContainerRunning(service string) bool {
 	ctx := context.Background()
 	cli, _ := client.NewClientWithOpts(client.FromEnv)
-	container, exists := GetContainerStore().Get(service)
+	container, exists := GetContainerStore().GetByService(service)
 	if !exists {
 		return false
 	}
