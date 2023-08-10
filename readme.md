@@ -22,6 +22,10 @@ O API Gateway Knative-Docker é uma solução inovadora que simula a funcionalid
 
 3. **Solicitações**: Envie suas solicitações HTTP para o API Gateway. Ele cuidará do roteamento e do gerenciamento dos contêineres Docker para você.
 
+## Como Contribuir
+
+Estamos sempre abertos a contribuições! Se você deseja ajudar a melhorar o projeto, seja através de correções de bugs, melhorias ou novas funcionalidades, siga nosso [Guia de Contribuição](CONTRIBUTING.md) para entender o processo e garantir que sua contribuição seja integrada da melhor forma possível.
+
 ## Licença
 
 Este projeto está licenciado sob a licença Apache 2.0. Consulte o arquivo [LICENSE](LICENSE) para obter detalhes.
