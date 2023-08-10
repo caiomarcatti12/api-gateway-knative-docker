@@ -26,6 +26,10 @@ O API Gateway Knative-Docker é uma solução inovadora que simula a funcionalid
 
 Estamos sempre abertos a contribuições! Se você deseja ajudar a melhorar o projeto, seja através de correções de bugs, melhorias ou novas funcionalidades, siga nosso [Guia de Contribuição](CONTRIBUTING.md) para entender o processo e garantir que sua contribuição seja integrada da melhor forma possível.
 
+## Código de Conduta
+
+Estamos comprometidos em proporcionar uma comunidade acolhedora e inclusiva para todos. Esperamos que todos os participantes do projeto sigam nosso [Código de Conduta](CODE_OF_CONDUCT.md). Pedimos que leia e siga estas diretrizes para garantir um ambiente respeitoso e produtivo para todos os colaboradores.
+
 ## Licença
 
 Este projeto está licenciado sob a licença Apache 2.0. Consulte o arquivo [LICENSE](LICENSE) para obter detalhes.
