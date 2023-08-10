@@ -14,13 +14,11 @@ O API Gateway Knative-Docker é uma solução inovadora que simula a funcionalid
 
 - **Roteamento Inteligente**: O API Gateway gerencia o roteamento de solicitações para o contêiner apropriado, garantindo uma resposta rápida e eficiente.
 
-## Configuração e Uso
+## Configuração das Rotas do API Gateway
 
-1. **Configuração de Rotas**: Utilize o arquivo `config.example.yaml` para definir suas rotas, especificando detalhes como caminho, serviço associado, TTL e outros parâmetros relevantes.
+O API Gateway do nosso projeto utiliza uma estrutura específica para configurar e gerenciar rotas que redirecionam solicitações para contêineres Docker específicos. Essa configuração aborda aspectos como o caminho da rota, o serviço de destino, tentativas de retentativa, checagem de saúde e mais.
 
-2. **Execução**: Inicie o API Gateway com o comando `go run main.go`. Por padrão, o servidor será iniciado na porta 8080.
-
-3. **Solicitações**: Envie suas solicitações HTTP para o API Gateway. Ele cuidará do roteamento e do gerenciamento dos contêineres Docker para você.
+Para entender completamente como configurar e o comportamento esperado dessas rotas, consulte o guia detalhado disponível em [ROUTE_CONFIGURATION.md](./ROUTE_CONFIGURATION.md).
 
 ## Como Contribuir
 

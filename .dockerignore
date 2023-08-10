@@ -1,0 +1,23 @@
+# Arquivos de log
+*.log
+
+# Arquivos e diretórios de dependências
+vendor/
+
+# Arquivos e diretórios do sistema de controle de versão
+.git
+
+# Arquivos e diretórios de IDEs e editores
+.idea
+.vscode
+*.swp
+*.swo
+
+# Arquivos binários e de artefatos de build
+bin/
+*.out
+*.exe
+
+.output/
+.deploy/
+.git/
