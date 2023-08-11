@@ -24,6 +24,10 @@ Para entender completamente como configurar e o comportamento esperado dessas ro
 
 Para configurar e iniciar o ambiente de desenvolvimento do projeto, consulte o guia [Desenvolvimento](./desenvolvimento.md).
 
+## Inicialização do Ambiente de Produção
+
+Para configurar e iniciar o ambiente de produção do projeto, consulte o guia [Produção](./producao.md).
+
 ## Como Contribuir
 
 Estamos sempre abertos a contribuições! Se você deseja ajudar a melhorar o projeto, seja através de correções de bugs, melhorias ou novas funcionalidades, siga nosso [Guia de Contribuição](CONTRIBUTING.md) para entender o processo e garantir que sua contribuição seja integrada da melhor forma possível.
