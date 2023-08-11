@@ -1,6 +1,6 @@
 # API Gateway Knative-Docker
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) ![Static Badge](https://img.shields.io/badge/N%C3%A3o%20pronto%20para%20produ%C3%A7%C3%A3o-red)
 
 ## Introdução
 
@@ -18,7 +18,7 @@ O API Gateway Knative-Docker é uma solução inovadora que simula a funcionalid
 
 O API Gateway do nosso projeto utiliza uma estrutura específica para configurar e gerenciar rotas que redirecionam solicitações para contêineres Docker específicos. Essa configuração aborda aspectos como o caminho da rota, o serviço de destino, tentativas de retentativa, checagem de saúde e mais.
 
-Para entender completamente como configurar e o comportamento esperado dessas rotas, consulte o guia detalhado disponível em [ROUTE_CONFIGURATION.md](./ROUTE_CONFIGURATION.md).
+Para entender completamente como configurar e o comportamento esperado dessas rotas, consulte o guia detalhado disponível em [Configuração de Rotas](./ROUTE_CONFIGURATION.md).
 
 ## Como Contribuir
 
