@@ -8,7 +8,6 @@ services:
       target: prod
     image: caiomarcatti12/api-gateway-knative-docker:prod
     container_name: api-gateway-knative-docker
-    privileged: true
     tty: true
     ports:
       - "8080:8080"
