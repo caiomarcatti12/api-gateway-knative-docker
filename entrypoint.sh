@@ -4,13 +4,16 @@
 SOCKET_GID=$(stat -c '%g' /var/run/docker.sock)
 
 # Verificar se o grupo com o GID especificado já existe
-if ! getent group $SOCKET_GID; then
+EXISTING_GROUP=$(getent group $SOCKET_GID | cut -d: -f1)
+
+if [ -z "$EXISTING_GROUP" ]; then
     # Criar um grupo com o GID especificado se ele não existir
     addgroup -g $SOCKET_GID docker_dynamic
-fi
+    EXISTING_GROUP=docker_dynamic
+fi1-erro-ao-iniciar-o-container
 
 # Adicionar o usuário 'appuser' ao grupo
-addgroup appuser docker_dynamic
+addgroup appuser $EXISTING_GROUP
 
 # Trocar para o usuário 'appuser' e executar o comando passado ao container
 exec su -s /bin/sh -c "$@" appuser
