@@ -15,7 +15,7 @@ cd api-gateway-knative-docker
 ### 3. Configuração das Rotas:
 - Antes de iniciar o projeto, é necessário configurar as rotas. Para isso, crie um arquivo chamado `config.yaml` na raiz do projeto.
 - Use o arquivo `config.example.yaml` como referência para a estrutura do arquivo `config.yaml`.
-- Configure as rotas conforme sua necessidade. Se precisar adicionar mais rotas ou entender a configuração das existentes, consulte o guia [Configuração de Rotas](./ROUTE_CONFIGURATION.md).
+- Configure as rotas conforme sua necessidade. Se precisar adicionar mais rotas ou entender a configuração das existentes, consulte o guia [Configuração de Rotas](./route_configuration.md).
 
 ### 4. Construção da Imagem de Produção:
 - O projeto utiliza um `Dockerfile` multi-stage, que primeiro compila o código-fonte e depois cria uma imagem de produção leve usando Alpine.
