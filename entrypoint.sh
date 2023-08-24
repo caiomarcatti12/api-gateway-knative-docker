@@ -10,7 +10,7 @@ if [ -z "$EXISTING_GROUP" ]; then
     # Criar um grupo com o GID especificado se ele não existir
     addgroup -g $SOCKET_GID docker_dynamic
     EXISTING_GROUP=docker_dynamic
-fi1-erro-ao-iniciar-o-container
+fi
 
 # Adicionar o usuário 'appuser' ao grupo
 addgroup appuser $EXISTING_GROUP
