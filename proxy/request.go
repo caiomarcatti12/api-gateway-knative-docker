@@ -17,14 +17,26 @@ package proxy
 
 import (
 	"api-gateway-knative-docker/config"
+	"api-gateway-knative-docker/cors"
 	"api-gateway-knative-docker/docker"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
-func HandleRequest(route config.Route) http.HandlerFunc {
+func HandleRequest(route config.Route, corsGlobal *cors.CORSConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if route.CORS != nil {
+			cors.ResolveCors(w, route.CORS) // set CORS headers
+		} else if corsGlobal != nil {
+			cors.ResolveCors(w, corsGlobal) // set CORS headers
+		}
+
+		// Check if it's just a preflight (OPTIONS) request
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		_, err := docker.StartContainer(route)
 		if err != nil {
@@ -33,8 +45,8 @@ func HandleRequest(route config.Route) http.HandlerFunc {
 		}
 
 		serviceURL := &url.URL{
-			Scheme: "http",
-			Host:   "host.docker.internal:" + route.Port,
+			Scheme: route.Protocol,
+			Host:   route.Host + ":" + route.Port,
 		}
 
 		// Strip the route path from the request
