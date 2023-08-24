@@ -17,6 +17,7 @@ package main
 
 import (
 	"api-gateway-knative-docker/config"
+	"api-gateway-knative-docker/cors"
 	"api-gateway-knative-docker/docker"
 	"api-gateway-knative-docker/proxy"
 	"log"
@@ -31,7 +32,7 @@ func main() {
 	}
 
 	for _, route := range config.GetRouteStore().GetAll() {
-		http.HandleFunc(route.Path, proxy.HandleRequest(route))
+		http.HandleFunc(route.Path, proxy.HandleRequest(route, cors.GetCorsStore().Get()))
 	}
 
 	go docker.CheckContainersActive()
