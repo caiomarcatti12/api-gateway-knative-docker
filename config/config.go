@@ -17,6 +17,7 @@
 package config
 
 import (
+	"api-gateway-knative-docker/cors"
 	"errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -42,6 +43,8 @@ func LoadConfig() error {
 	for _, route := range config.Routes {
 		GetRouteStore().Add(route)
 	}
+
+	cors.GetCorsStore().Add(config.CORS)
 
 	return nil
 }

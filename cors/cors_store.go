@@ -13,11 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package config
+package cors
 
-import "api-gateway-knative-docker/cors"
+import (
+	"sync"
+)
 
-type Config struct {
-	Routes []Route          `yaml:"routes"`
-	CORS   *cors.CORSConfig `yaml:"cors"` // Configuração CORS para esta rota
+var corsStore *CorsStore
+var corsStoreOnce sync.Once
+
+// GetCorsStore returns the global instance of CorsStore.
+func GetCorsStore() *CorsStore {
+	corsStoreOnce.Do(func() {
+		corsStore = &CorsStore{
+			config: &CORSConfig{},
+		}
+	})
+	return corsStore
+}
+
+// Add updates the CORS configuration.
+func (rs *CorsStore) Add(config *CORSConfig) {
+	rs.mu.Lock()
+	defer rs.mu.Unlock()
+	rs.config = config
+}
+
+// Get retrieves the current CORS configuration.
+func (rs *CorsStore) Get() *CORSConfig {
+	rs.mu.RLock()
+	defer rs.mu.RUnlock()
+
+	return rs.config
 }

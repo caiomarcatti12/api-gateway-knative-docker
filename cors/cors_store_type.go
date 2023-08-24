@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package config
+package cors
 
-import "api-gateway-knative-docker/cors"
+import "sync"
 
-type Config struct {
-	Routes []Route          `yaml:"routes"`
-	CORS   *cors.CORSConfig `yaml:"cors"` // Configuração CORS para esta rota
+type CorsStore struct {
+	config *CORSConfig
+	mu     sync.RWMutex
 }
