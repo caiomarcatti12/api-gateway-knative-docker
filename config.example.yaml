@@ -2,6 +2,7 @@ routes:
   - protocol: "http"
     host: "host.docker.internal"
     path: "/header"
+    StripPath: true
     service: "meu-nginx"
     port: 8081
     ttl: 10
