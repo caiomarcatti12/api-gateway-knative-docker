@@ -50,8 +50,9 @@ func HandleRequest(route config.Route, corsGlobal *cors.CORSConfig) http.Handler
 		}
 
 		// Strip the route path from the request
-		strippedPath := stripRoutePath(r.URL.Path, route.Path)
-		r.URL.Path = strippedPath
+		if route.StripPath {
+			r.URL.Path = stripRoutePath(r.URL.Path, route.Path)
+		}
 
 		proxyToService(serviceURL)(w, r)
 	}

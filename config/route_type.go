@@ -21,6 +21,7 @@ type Route struct {
 	Protocol   string           `yaml:"protocol"` // Protocolo (http ou https)
 	Host       string           `yaml:"host"`     // Host para onde a solicitação será redirecionada
 	Path       string           `yaml:"path"`
+	StripPath  bool             `yaml:"stripPath"`
 	Service    string           `yaml:"service"`
 	TTL        int              `yaml:"ttl"`
 	Port       string           `yaml:"port"`
