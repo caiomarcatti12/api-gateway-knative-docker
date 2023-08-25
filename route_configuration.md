@@ -11,6 +11,7 @@ routes:
   - path: CAMINHO_DA_ROTA
     protocol: PROTOCOLO (http ou https)
     host: DOMÍNIO_OU_IP
+    stripPath: REMOVE_PATH_DA_ROTA
     service: NOME_DO_SERVIÇO
     port: PORTA
     ttl: TEMPO_DE_VIDA
@@ -24,6 +25,7 @@ routes:
 1. **path**: Define o caminho da rota na solicitação que será redirecionada pelo API Gateway.
 2. **protocol**: Especifica o protocolo da solicitação (pode ser "http" ou "https").
 3. **host**: Define o domínio ou IP para o qual a solicitação será redirecionada.
+3. **stripPath**: Define se a solicitação que será redirecionada irá remover o parametro path da rota.
 4. **service**: Especifica o nome do serviço de destino que corresponde a um contêiner Docker.
 5. **port**: Indica a porta do contêiner de destino que receberá a solicitação.
 6. **ttl**: Define o tempo máximo de vida do contêiner desde o momento da inicialização, medido em segundos.
