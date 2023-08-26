@@ -15,7 +15,10 @@
  */
 package config
 
-import "sync"
+import (
+	"strings"
+	"sync"
+)
 
 var routeStore *RouteStore
 var routeStoreOnce sync.Once
@@ -52,6 +55,19 @@ func (rs *RouteStore) Get(routeService string) (Route, bool) {
 	return route, exists
 }
 
+func (rs *RouteStore) GetByPath(desiredPath string) (Route, bool) {
+	rs.mu.RLock()
+	defer rs.mu.RUnlock()
+
+	for _, route := range rs.routes {
+		if route.Path == desiredPath {
+			return route, true
+		}
+	}
+
+	return Route{}, false
+}
+
 func (rs *RouteStore) GetAll() map[string]Route {
 	rs.mu.RLock()
 	defer rs.mu.RUnlock()
@@ -62,4 +78,16 @@ func (rs *RouteStore) GetAll() map[string]Route {
 		copiedRoutes[path] = route
 	}
 	return copiedRoutes
+}
+
+func (rs *RouteStore) MatchPrefix(prefixAccess string) bool {
+	rs.mu.RLock()
+	defer rs.mu.RUnlock()
+
+	for _, route := range rs.GetAll() {
+		if strings.HasPrefix(route.Path, prefixAccess) && prefixAccess != "/" {
+			return true
+		}
+	}
+	return false
 }
