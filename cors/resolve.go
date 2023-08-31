@@ -6,10 +6,22 @@ import (
 	"strings"
 )
 
-func ResolveCors(w http.ResponseWriter, corsConfig *CORSConfig) {
-	if len(corsConfig.AllowedOrigins) > 0 {
-		w.Header().Set("Access-Control-Allow-Origin", strings.Join(corsConfig.AllowedOrigins, ", "))
+func ResolveCors(w http.ResponseWriter, r *http.Request, corsConfig *CORSConfig) {
+	origin := r.Header.Get("Origin")
+
+	isAllowed := false
+
+	for _, allowedOrigin := range corsConfig.AllowedOrigins {
+		if allowedOrigin == origin {
+			isAllowed = true
+			break
+		}
 	}
+
+	if isAllowed {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+	}
+
 	if len(corsConfig.AllowedMethods) > 0 {
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join(corsConfig.AllowedMethods, ", "))
 	}

@@ -27,9 +27,9 @@ import (
 func HandleRequest(route config.Route, corsGlobal *cors.CORSConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if route.CORS != nil {
-			cors.ResolveCors(w, route.CORS) // set CORS headers
+			cors.ResolveCors(w, r, route.CORS) // set CORS headers
 		} else if corsGlobal != nil {
-			cors.ResolveCors(w, corsGlobal) // set CORS headers
+			cors.ResolveCors(w, r, corsGlobal) // set CORS headers
 		}
 
 		// Check if it's just a preflight (OPTIONS) request
