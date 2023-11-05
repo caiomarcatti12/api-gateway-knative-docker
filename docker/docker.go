@@ -32,6 +32,10 @@ var containerMutex = &sync.Mutex{}
 
 // StartContainer Funcionalidade de iniciar um container
 func StartContainer(route config.Route) (bool, error) {
+	if route.Service == "" {
+		return true, nil
+	}
+
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
