@@ -18,15 +18,15 @@ package config
 import "api-gateway-knative-docker/cors"
 
 type Route struct {
-	Protocol   string           `yaml:"protocol"` // Protocolo (http ou https)
-	Host       string           `yaml:"host"`     // Host para onde a solicitação será redirecionada
-	Path       string           `yaml:"path"`
-	StripPath  bool             `yaml:"stripPath"`
-	Service    string           `yaml:"service"`
-	TTL        int              `yaml:"ttl"`
-	Port       string           `yaml:"port"`
-	HealthPath string           `yaml:"healthPath"` // Caminho para healthcheck
-	Retry      int              `yaml:"retry"`      // Número de tentativas para healthcheck
-	RetryDelay int              `yaml:"retryDelay"` // Intervalo entre tentativas em segundos
-	CORS       *cors.CORSConfig `yaml:"cors"`       // Configuração CORS para esta rota
+	Protocol      string           `yaml:"protocol"` // Protocolo (http ou https)
+	Host          string           `yaml:"host"`     // Host para onde a solicitação será redirecionada
+	Path          string           `yaml:"path"`
+	StripPath     bool             `yaml:"stripPath"`
+	ContainerName string           `yaml:"containerName"`
+	TTL           int              `yaml:"ttl"`
+	Port          string           `yaml:"port"`
+	HealthPath    string           `yaml:"healthPath"` // Caminho para healthcheck
+	Retry         int              `yaml:"retry"`      // Número de tentativas para healthcheck
+	RetryDelay    int              `yaml:"retryDelay"` // Intervalo entre tentativas em segundos
+	CORS          *cors.CORSConfig `yaml:"cors"`       // Configuração CORS para esta rota
 }

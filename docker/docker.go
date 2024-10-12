@@ -17,115 +17,119 @@ package docker
 
 import (
 	"api-gateway-knative-docker/config"
+	"api-gateway-knative-docker/docker/container_store"
 	"context"
 	"errors"
+	"log"
+	"sync"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"log"
-	"net/http"
-	"sync"
-	"time"
 )
 
-var containerMutex = &sync.Mutex{}
+var (
+	mutexes      = make(map[string]*sync.Mutex)
+	mutexesGuard = &sync.Mutex{} // Guard para proteger o acesso ao mapa de mutexes
+	once         sync.Once
+)
+
+// getDockerClient garante que apenas uma instância do cliente Docker seja criada (singleton).
+func getDockerClient() (*client.Client, error) {
+	var err error
+	once.Do(func() {
+		dockerClientInstance, err = client.NewClientWithOpts(client.FromEnv)
+	})
+	return dockerClientInstance, err
+}
+
+// getMutexForService retorna o mutex associado a um serviço, criando um novo se necessário.
+func getMutexForService(service string) *sync.Mutex {
+	mutexesGuard.Lock()
+	defer mutexesGuard.Unlock()
+
+	if _, exists := mutexes[service]; !exists {
+		log.Printf("Criando novo mutex para o serviço: %s", service)
+		mutexes[service] = &sync.Mutex{}
+	}
+	return mutexes[service]
+}
 
 // StartContainer Funcionalidade de iniciar um container
 func StartContainer(route config.Route) (bool, error) {
-	if route.Service == "" {
+	if route.ContainerName == "" {
+		log.Println("Nenhum serviço associado à rota, ignorando start do container.")
 		return true, nil
 	}
 
 	ctx := context.Background()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := getDockerClient()
+
 	if err != nil {
+		log.Printf("Erro ao criar cliente Docker: %v", err)
 		return false, err
 	}
 
-	if !isContainerRunning(route.Service) {
-		containerMutex.Lock()
-		if !isContainerRunning(route.Service) {
-			if err := cli.ContainerStart(ctx, route.Service, types.ContainerStartOptions{}); err != nil {
-				defer containerMutex.Unlock()
-				return false, err
-			}
+	log.Printf("Iniciando processo para o container do serviço: %s", route.ContainerName)
 
-			log.Println("Iniciando container:", route.Service)
+	containerService, exists := container_store.GetByContainerName(route.ContainerName)
 
-			//CheckContainersActive()
-
-			// Verificar o healthcheck do container
-			if !checkHealth(route) {
-				return false, errors.New("healthcheck falhou para o container " + route.Service)
-			}
-			defer containerMutex.Unlock()
-		}
+	if !exists {
+		log.Printf("Não foi possível encontrar o serviço para o container %s", route.ContainerName)
 	}
 
-	updateLastAccessRequestContainer(route)
+	serviceMutex := getMutexForService(route.ContainerName)
+	serviceMutex.Lock()
+	defer serviceMutex.Unlock()
+
+	log.Printf("Container para o serviço %s não está em execução. Tentando iniciar...", route.ContainerName)
+	if err := cli.ContainerStart(ctx, containerService.ID, types.ContainerStartOptions{}); err != nil {
+		log.Printf("Erro ao iniciar container para o serviço %s: %v", route.ContainerName, err)
+		return false, err
+	}
+
+	log.Printf("Container iniciado para o serviço: %s", route.ContainerName)
+
+	// Verificar o healthcheck do container
+	if !checkHealth(route) {
+		log.Printf("Healthcheck falhou para o container %s", route.ContainerName)
+		return false, errors.New("healthcheck falhou para o container " + route.ContainerName)
+	}
+
+	log.Printf("Healthcheck bem-sucedido para o container: %s", route.ContainerName)
+
+
+	log.Printf("Último acesso ao container do serviço %s atualizado.", route.ContainerName)
 	return true, nil
 }
 
 // StopContainer Funcionalidade de parar um container
 func StopContainer(containerID string) {
 	ctx := context.Background()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := getDockerClient()
 	if err != nil {
-		log.Println("Erro ao criar cliente Docker:", err)
+		log.Printf("Erro ao criar cliente Docker: %v", err)
 		return
 	}
 
-	log.Println("Realizando stop no container:", containerID)
-	containerMutex.Lock()
+	log.Printf("Iniciando processo de stop para o container: %s", containerID)
 
-	err = cli.ContainerStop(ctx, containerID, container.StopOptions{}) // nil é um valor temporário, ajuste conforme necessário
+	// Recupera o serviço associado ao containerID para obter o mutex correto
+	service := getServiceForContainer(containerID)
+	if service == "" {
+		log.Printf("Erro ao encontrar o serviço associado ao container: %s", containerID)
+		return
+	}
+
+	serviceMutex := getMutexForService(service)
+	serviceMutex.Lock()
+	defer serviceMutex.Unlock()
+
+	log.Printf("Parando container: %s do serviço: %s", containerID, service)
+	err = cli.ContainerStop(ctx, containerID, container.StopOptions{})
 	if err != nil {
-		log.Println("Erro ao parar o container:", err)
-	}
-
-	//CheckContainersActive()
-
-	defer containerMutex.Unlock()
-}
-
-// Verifica se o container está em execução
-func isContainerRunning(service string) bool {
-	ctx := context.Background()
-	cli, _ := client.NewClientWithOpts(client.FromEnv)
-	container, exists := GetContainerStore().GetByService(service)
-	if !exists {
-		return false
-	}
-
-	_, err := cli.ContainerInspect(ctx, container.ID)
-
-	return err == nil
-}
-
-func checkHealth(route config.Route) bool {
-	client := &http.Client{
-		Timeout: time.Duration(route.RetryDelay) * time.Second, // Defina um timeout adequado
-	}
-
-	for i := 0; i < route.Retry; i++ {
-		resp, err := client.Get("http://host.docker.internal:" + route.Port + route.HealthPath)
-		if err == nil && resp.StatusCode == http.StatusOK {
-			return true
-		}
-
-		// Se não for a última tentativa, aguarde antes de tentar novamente
-		if i < route.Retry-1 {
-			time.Sleep(time.Duration(route.RetryDelay) * time.Second)
-		}
-	}
-
-	return false
-}
-func updateLastAccessRequestContainer(route config.Route) {
-	containerStore := GetContainerStore()
-	containerService, exists := containerStore.GetByService(route.Service)
-
-	if exists {
-		containerStore.UpdateAccessTime(containerService.ID, time.Now())
+		log.Printf("Erro ao parar o container %s: %v", containerID, err)
+	} else {
+		log.Printf("Container %s parado com sucesso.", containerID)
 	}
 }

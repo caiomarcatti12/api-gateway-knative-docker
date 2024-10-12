@@ -33,21 +33,21 @@ func GetRouteStore() *RouteStore {
 // tornando privado para garantir que somente GetRouteStore() possa criar uma instância
 func newRouteStore() *RouteStore {
 	return &RouteStore{
-		routesByService: make(map[string]Route),
-		routesByPrefix:  make(map[string]Route),
+		routesByContainerName: make(map[string]Route),
+		routesByPrefix:        make(map[string]Route),
 	}
 }
 func (rs *RouteStore) Add(route Route) {
-	rs.routesByService[route.Service] = route
+	rs.routesByContainerName[route.ContainerName] = route
 	rs.routesByPrefix[route.Path] = route
 }
 
 func (rs *RouteStore) Remove(routeService string) {
-	delete(rs.routesByService, routeService)
+	delete(rs.routesByContainerName, routeService)
 }
 
 func (rs *RouteStore) Get(routeService string) (Route, bool) {
-	route, exists := rs.routesByService[routeService]
+	route, exists := rs.routesByContainerName[routeService]
 	return route, exists
 }
 

@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docker
-
-import (
-	"sync"
-)
+package container_store
 
 type ContainerStore struct {
-	containers map[string]Container // Mapeamento de ID do contêiner para detalhes
-	mu         sync.RWMutex
+	containers      map[string]Container // Map com ID como chave
+	containersBySvc map[string]Container // Map com Service como chave
 }
