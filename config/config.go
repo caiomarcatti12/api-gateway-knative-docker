@@ -19,12 +19,26 @@ package config
 import (
 	"api-gateway-knative-docker/cors"
 	"errors"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v2"
 )
 
 func LoadConfig() error {
-	configFile, err := ioutil.ReadFile("config.yaml")
+	// Em produção, esperamos que o arquivo config.yaml esteja na raiz
+	executable, err := os.Executable()
+	if err != nil {
+		log.Fatal("Erro ao obter o caminho do binário:", err)
+	}
+	execDir := filepath.Dir(executable)
+
+	// Define o caminho absoluto para o arquivo .env na mesma pasta do binário
+	envPath := filepath.Join(execDir, "config.yaml")
+
+	configFile, err := ioutil.ReadFile(envPath)
 	if err != nil {
 		return err
 	}
