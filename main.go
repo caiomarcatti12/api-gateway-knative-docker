@@ -31,19 +31,11 @@ func main() {
 		return
 	}
 
-	for _, route := range config.GetRouteStore().GetAll() {
-		if route.Path != "/" {
-			http.HandleFunc(route.Path, proxy.HandleRequest(route, cors.GetCorsStore().Get()))
-		}
-	}
-
 	// Defina um manipulador padrão para "/"
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		defaultRoute, exists := config.GetRouteStore().GetByPath("/")
-		if r.URL.Path == "/" || !config.GetRouteStore().MatchPrefix(r.URL.Path) || !exists {
-			proxy.HandleRequest(defaultRoute, cors.GetCorsStore().Get())(w, r)
-			return
-		}
+		route := config.GetRouteStore().GetRouteByPath(r.URL.Path)
+
+		proxy.HandleRequest(route, cors.GetCorsStore().Get())(w, r)
 	})
 
 	go docker.CheckContainersActive()

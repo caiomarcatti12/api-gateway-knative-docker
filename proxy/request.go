@@ -26,12 +26,21 @@ import (
 
 func HandleRequest(route config.Route, corsGlobal *cors.CORSConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		isAllowed := true
 		if route.CORS != nil {
-			cors.ResolveCors(w, r, route.CORS) // set CORS headers
+			isAllowed = cors.ResolveCors(w, r, route.CORS) // set CORS headers
 		} else if corsGlobal != nil {
-			cors.ResolveCors(w, r, corsGlobal) // set CORS headers
+			isAllowed = cors.ResolveCors(w, r, corsGlobal) // set CORS headers
 		}
 
+		if !isAllowed {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if route.Protocol == "" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		// Check if it's just a preflight (OPTIONS) request
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
