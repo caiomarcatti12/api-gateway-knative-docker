@@ -6,8 +6,12 @@ import (
 	"strings"
 )
 
-func ResolveCors(w http.ResponseWriter, r *http.Request, corsConfig *CORSConfig) {
+func ResolveCors(w http.ResponseWriter, r *http.Request, corsConfig *CORSConfig) bool {
 	origin := r.Header.Get("Origin")
+
+	if origin == "" {
+		return true
+	}
 
 	isAllowed := false
 
@@ -37,4 +41,6 @@ func ResolveCors(w http.ResponseWriter, r *http.Request, corsConfig *CORSConfig)
 	if corsConfig.MaxAge > 0 {
 		w.Header().Set("Access-Control-Max-Age", strconv.Itoa(corsConfig.MaxAge))
 	}
+
+	return isAllowed
 }
