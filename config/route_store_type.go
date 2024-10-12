@@ -18,7 +18,7 @@ package config
 import "sync"
 
 type RouteStore struct {
-	routesByService map[string]Route // Mapeamento do caminho da rota para detalhes
-	routesByPrefix  map[string]Route // Mapeamento do caminho da rota para detalhes
-	mu              sync.RWMutex
+	routesByContainerName map[string]Route // Mapeamento do caminho da rota para detalhes
+	routesByPrefix        map[string]Route // Mapeamento do caminho da rota para detalhes
+	mu                    sync.RWMutex
 }

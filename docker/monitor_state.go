@@ -16,17 +16,23 @@
 package docker
 
 import (
+	"api-gateway-knative-docker/docker/container_store"
 	"context"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"log"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
-var updateContainerMutex sync.Mutex
+var (
+	updateContainerMutex sync.Mutex
+	dockerClientInstance *client.Client
+)
 
+// CheckContainersActive inicia o processo contínuo de verificação dos containers.
 func CheckContainersActive() {
 	for {
 		syncContainersState()
@@ -34,51 +40,94 @@ func CheckContainersActive() {
 	}
 }
 
+// syncContainersState é o processo principal que sincroniza o estado dos containers.
 func syncContainersState() {
 	updateContainerMutex.Lock()
 	defer updateContainerMutex.Unlock()
 
-	ctx := context.Background()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := getDockerClient()
 	if err != nil {
-		log.Println("Erro ao criar cliente Docker:", err)
+		log.Println("Erro ao obter cliente Docker:", err)
 		return
 	}
 
-	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
+	containers, err := listAllContainers(cli)
 	if err != nil {
 		log.Println("Erro ao listar containers:", err)
 		return
 	}
 
-	currentContainers := make(map[string]Container)
+	currentContainers := mapContainers(containers)
+	activeContainers := container_store.GetAll()
+
+	removeMissingContainers(activeContainers, currentContainers)
+	updateOrAddContainers(activeContainers, currentContainers)
+}
+
+// listAllContainers lista todos os containers, incluindo os parados.
+func listAllContainers(cli *client.Client) ([]types.Container, error) {
+	ctx := context.Background()
+	return cli.ContainerList(ctx, types.ContainerListOptions{All: true})
+}
+
+// mapContainers cria um mapa dos containers atuais com suas informações relevantes.
+func mapContainers(containers []types.Container) map[string]container_store.Container {
+	currentContainers := make(map[string]container_store.Container)
+
 	for _, container := range containers {
 		for _, name := range container.Names {
-			// Criando um novo contêiner do tipo docker.Container
-			newContainer := Container{
-				ID:         container.ID,
-				Service:    strings.ReplaceAll(name, "/", ""),
-				LastAccess: time.Now(),
-			}
-
+			newContainer := createContainerObject(container, name)
 			currentContainers[container.ID] = newContainer
 		}
 	}
+	return currentContainers
+}
 
-	activeContainers := GetContainerStore().GetAll()
+// createContainerObject cria uma instância de Container com base nos dados fornecidos.
+func createContainerObject(container types.Container, name string) container_store.Container {
+	return container_store.Container{
+		ID:            container.ID,
+		ContainerName: strings.ReplaceAll(name, "/", ""),
+		LastAccess:    time.Now(),
+		IsActive:      container.State == "running",
+	}
+}
 
-	// Atualizando o ContainerStore para refletir o estado real
-	for _, storedContainer := range activeContainers {
-		if _, exists := currentContainers[storedContainer.ID]; !exists {
-			// Se o contêiner armazenado não estiver na lista de contêineres ativos, remova-o
-			GetContainerStore().Remove(storedContainer.ID)
+// removeMissingContainers remove containers que não estão mais presentes no host.
+func removeMissingContainers(activeContainers, currentContainers map[string]container_store.Container) {
+	for containerID, storedContainer := range activeContainers {
+		if _, exists := currentContainers[containerID]; !exists {
+			container_store.Remove(containerID)
+			log.Printf("Removido contêiner: %s (%s)", storedContainer.ContainerName, storedContainer.ID)
 		}
 	}
+}
 
+// updateOrAddContainers adiciona ou atualiza containers no store.
+func updateOrAddContainers(activeContainers, currentContainers map[string]container_store.Container) {
 	for _, currentContainer := range currentContainers {
-		if _, exists := activeContainers[currentContainer.ID]; !exists {
-			// Se o contêiner ativo não estiver no containerStore, adicione-o
-			GetContainerStore().Add(currentContainer)
+		if storedContainer, exists := activeContainers[currentContainer.ID]; exists {
+			updateContainerIfChanged(storedContainer, currentContainer)
+		} else {
+			addNewContainer(currentContainer)
 		}
 	}
+}
+
+// updateContainerIfChanged atualiza um container se houver mudança no status.
+func updateContainerIfChanged(storedContainer, currentContainer container_store.Container) {
+	if storedContainer.IsActive != currentContainer.IsActive {
+		storedContainer.IsActive = currentContainer.IsActive
+
+		container_store.Update(storedContainer)
+
+		log.Printf("Atualizado contêiner: %s (%s) - IsActive: %v",
+			storedContainer.ContainerName, storedContainer.ID, storedContainer.IsActive)
+	}
+}
+
+// addNewContainer adiciona um novo container ao store.
+func addNewContainer(currentContainer container_store.Container) {
+	container_store.Add(currentContainer)
+	log.Printf("Adicionado novo contêiner: %s (%s)", currentContainer.ContainerName, currentContainer.ID)
 }

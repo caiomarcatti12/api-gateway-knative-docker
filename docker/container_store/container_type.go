@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docker
+package container_store
 
 import "time"
 
 type Container struct {
-	ID         string
-	Service    string
-	LastAccess time.Time
+	ID            string
+	ContainerName string
+	LastAccess    time.Time
+	IsActive      bool
 }

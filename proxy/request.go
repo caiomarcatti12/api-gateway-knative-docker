@@ -19,6 +19,7 @@ import (
 	"api-gateway-knative-docker/config"
 	"api-gateway-knative-docker/cors"
 	"api-gateway-knative-docker/docker"
+	"api-gateway-knative-docker/docker/container_store"
 	"net/http"
 	"net/url"
 	"strings"
@@ -47,11 +48,22 @@ func HandleRequest(route config.Route, corsGlobal *cors.CORSConfig) http.Handler
 			return
 		}
 
-		_, err := docker.StartContainer(route)
-		if err != nil {
-			http.Error(w, "Error starting container", http.StatusInternalServerError)
+		containerService, exists := container_store.GetByContainerName(route.ContainerName)
+
+		if !exists {
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
+
+		if !containerService.IsActive {
+			_, err := docker.StartContainer(route)
+			if err != nil {
+				http.Error(w, "Error starting container", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		container_store.UpdateAccessTime(containerService.ID)
 
 		serviceURL := &url.URL{
 			Scheme: route.Protocol,
