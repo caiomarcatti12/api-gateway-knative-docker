@@ -1,4 +1,4 @@
-package cors
+package config
 
 import (
 	"net/http"
@@ -6,7 +6,16 @@ import (
 	"strings"
 )
 
-func ResolveCors(w http.ResponseWriter, r *http.Request, corsConfig *CORSConfig) bool {
+type CORSConfig struct {
+	AllowedOrigins   []string `yaml:"allowedOrigins"`
+	AllowedMethods   []string `yaml:"allowedMethods"`
+	AllowedHeaders   []string `yaml:"allowedHeaders"`
+	AllowCredentials bool     `yaml:"allowCredentials"`
+	ExposedHeaders   []string `yaml:"exposedHeaders"`
+	MaxAge           int      `yaml:"maxAge"`
+}
+
+func ResolveCors(w http.ResponseWriter, r *http.Request, corsConfig CORSConfig) bool {
 	origin := r.Header.Get("Origin")
 
 	if origin == "" {

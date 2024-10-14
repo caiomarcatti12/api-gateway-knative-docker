@@ -40,32 +40,37 @@ func monitorAndStopContainers() {
 	defer containerMonitorMutex.Unlock()
 
 	now := time.Now()
-	routeStore := config.GetRouteStore()
-	containers := container_store.GetAll()
 
-	for _, container := range containers {
-		checkAndStopContainer(container, routeStore, now)
+	hostStore := config.GetHostStore()
+
+	hosts := hostStore.ListHosts()
+
+	for _, host := range hosts {
+		routes, _ := hostStore.GetAllRoutes(host)
+
+		for _, route := range routes {
+			container, _ := container_store.GetByContainerName(route.Backend.ContainerName)
+
+			if container != nil {
+				checkAndStopContainer(*container, route, now)
+			}
+		}
 	}
 }
 
 // checkAndStopContainer verifica se o container deve ser parado com base no TTL.
-func checkAndStopContainer(container container_store.Container, routeStore *config.RouteStore, now time.Time) {
-	route, exists := routeStore.Get(container.ContainerName)
-	if !exists {
-		return
-	}
-
+func checkAndStopContainer(container container_store.Container, route config.RouteConfig, now time.Time) {
 	if isContainerExpired(container, route, now) {
 		stopAndRemoveContainer(container)
 	}
 }
 
-// isContainerExpired verifica se o container excedeu o tempo de inatividade permitido.
-func isContainerExpired(container container_store.Container, route config.Route, now time.Time) bool {
+// // isContainerExpired verifica se o container excedeu o tempo de inatividade permitido.
+func isContainerExpired(container container_store.Container, route config.RouteConfig, now time.Time) bool {
 	return now.Sub(container.LastAccess) > time.Duration(route.TTL)*time.Second && container.IsActive
 }
 
-// stopAndRemoveContainer para e remove o container da store.
+// // stopAndRemoveContainer para e remove o container da store.
 func stopAndRemoveContainer(container container_store.Container) {
 	StopContainer(container.ID)
 

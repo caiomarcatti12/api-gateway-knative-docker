@@ -56,8 +56,8 @@ func getMutexForService(service string) *sync.Mutex {
 }
 
 // StartContainer Funcionalidade de iniciar um container
-func StartContainer(route config.Route) (bool, error) {
-	if route.ContainerName == "" {
+func StartContainer(route config.RouteConfig) (bool, error) {
+	if route.Backend.ContainerName == "" {
 		log.Println("Nenhum serviço associado à rota, ignorando start do container.")
 		return true, nil
 	}
@@ -70,36 +70,37 @@ func StartContainer(route config.Route) (bool, error) {
 		return false, err
 	}
 
-	log.Printf("Iniciando processo para o container do serviço: %s", route.ContainerName)
+	log.Printf("Iniciando processo para o container do serviço: %s", route.Backend.ContainerName)
 
-	containerService, exists := container_store.GetByContainerName(route.ContainerName)
+	containerService, exists := container_store.GetByContainerName(route.Backend.ContainerName)
 
 	if !exists {
-		log.Printf("Não foi possível encontrar o serviço para o container %s", route.ContainerName)
+		log.Printf("Não foi possível encontrar o serviço para o container %s", route.Backend.ContainerName)
 	}
 
-	serviceMutex := getMutexForService(route.ContainerName)
+	serviceMutex := getMutexForService(route.Backend.ContainerName)
 	serviceMutex.Lock()
 	defer serviceMutex.Unlock()
 
-	log.Printf("Container para o serviço %s não está em execução. Tentando iniciar...", route.ContainerName)
+	log.Printf("Container para o serviço %s não está em execução. Tentando iniciar...", route.Backend.ContainerName)
 	if err := cli.ContainerStart(ctx, containerService.ID, types.ContainerStartOptions{}); err != nil {
-		log.Printf("Erro ao iniciar container para o serviço %s: %v", route.ContainerName, err)
+		log.Printf("Erro ao iniciar container para o serviço %s: %v", route.Backend.ContainerName, err)
 		return false, err
 	}
 
-	log.Printf("Container iniciado para o serviço: %s", route.ContainerName)
+	log.Printf("Container iniciado para o serviço: %s", route.Backend.ContainerName)
 
 	// Verificar o healthcheck do container
 	if !checkHealth(route) {
-		log.Printf("Healthcheck falhou para o container %s", route.ContainerName)
-		return false, errors.New("healthcheck falhou para o container " + route.ContainerName)
+		log.Printf("Healthcheck falhou para o container %s", route.Backend.ContainerName)
+		return false, errors.New("healthcheck falhou para o container " + route.Backend.ContainerName)
 	}
 
-	log.Printf("Healthcheck bem-sucedido para o container: %s", route.ContainerName)
+	log.Printf("Healthcheck bem-sucedido para o container: %s", route.Backend.ContainerName)
 
+	log.Printf("Último acesso ao container do serviço %s atualizado.", route.Backend.ContainerName)
+	container_store.UpdateAccessTime(containerService.ID)
 
-	log.Printf("Último acesso ao container do serviço %s atualizado.", route.ContainerName)
 	return true, nil
 }
 
@@ -132,4 +133,15 @@ func StopContainer(containerID string) {
 	} else {
 		log.Printf("Container %s parado com sucesso.", containerID)
 	}
+}
+
+// getServiceForContainer é um placeholder para obter o serviço associado ao containerID
+// (Você precisaria implementar isso com base no seu store)
+func getServiceForContainer(containerID string) string {
+	container, exists := container_store.GetByID(containerID)
+	if exists {
+		return container.ContainerName
+	}
+	log.Printf("Não foi possível encontrar o serviço para o container %s", containerID)
+	return ""
 }
