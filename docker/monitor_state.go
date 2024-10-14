@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
 
@@ -67,7 +68,7 @@ func syncContainersState() {
 // listAllContainers lista todos os containers, incluindo os parados.
 func listAllContainers(cli *client.Client) ([]types.Container, error) {
 	ctx := context.Background()
-	return cli.ContainerList(ctx, types.ContainerListOptions{All: true})
+	return cli.ContainerList(ctx, container.ListOptions{All: true})
 }
 
 // mapContainers cria um mapa dos containers atuais com suas informações relevantes.
