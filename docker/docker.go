@@ -23,7 +23,6 @@ import (
 	"log"
 	"sync"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
@@ -83,7 +82,7 @@ func StartContainer(route config.RouteConfig) (bool, error) {
 	defer serviceMutex.Unlock()
 
 	log.Printf("Container para o serviço %s não está em execução. Tentando iniciar...", route.Backend.ContainerName)
-	if err := cli.ContainerStart(ctx, containerService.ID, types.ContainerStartOptions{}); err != nil {
+	if err := cli.ContainerStart(ctx, containerService.ID, container.StartOptions{}); err != nil {
 		log.Printf("Erro ao iniciar container para o serviço %s: %v", route.Backend.ContainerName, err)
 		return false, err
 	}

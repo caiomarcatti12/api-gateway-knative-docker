@@ -20,12 +20,6 @@ O API Gateway do nosso projeto utiliza uma estrutura específica para configurar
 
 Para entender completamente como configurar e o comportamento esperado dessas rotas, consulte o guia detalhado disponível em [Configuração de Rotas](./route_configuration.md).
 
-## Configuração CORS no API Gateway
-
-O nosso API Gateway também suporta a configuração detalhada do CORS (Cross-Origin Resource Sharing), permitindo controlar com precisão quais origens externas podem interagir com os nossos serviços e como elas podem fazer isso. A configuração aborda elementos como origens permitidas, métodos HTTP aceitos, cabeçalhos permitidos, e mais.
-
-Para uma compreensão aprofundada de como implementar e o comportamento esperado dessas configurações CORS, consulte o guia detalhado disponível em [Configuração CORS](./cors_configuration.md).
-
 ## Inicialização do Ambiente de Desenvolvimento
 
 Para configurar e iniciar o ambiente de desenvolvimento do projeto, consulte o guia [Desenvolvimento](./development.md).
