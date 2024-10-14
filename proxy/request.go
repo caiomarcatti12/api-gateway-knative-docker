@@ -38,23 +38,25 @@ func HandleRequest(route config.RouteConfig) http.HandlerFunc {
 			return
 		}
 
-		containerService, exists := container_store.GetByContainerName(route.Backend.ContainerName)
+		if route.Backend.ContainerName != "" {
+			containerService, exists := container_store.GetByContainerName(route.Backend.ContainerName)
 
-		if !exists {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		if !containerService.IsActive {
-			_, err := docker.StartContainer(route)
-			if err != nil {
-				http.Error(w, "Error starting container", http.StatusInternalServerError)
+			if !exists {
+				w.WriteHeader(http.StatusNotFound)
 				return
 			}
-		}
 
-		log.Printf("Último acesso ao container do serviço %s atualizado.", route.Backend.ContainerName)
-		container_store.UpdateAccessTime(containerService.ID)
+			if !containerService.IsActive {
+				_, err := docker.StartContainer(route)
+				if err != nil {
+					http.Error(w, "Error starting container", http.StatusInternalServerError)
+					return
+				}
+			}
+
+			log.Printf("Último acesso ao container do serviço %s atualizado.", route.Backend.ContainerName)
+			container_store.UpdateAccessTime(containerService.ID)
+		}
 
 		serviceURL := &url.URL{
 			Scheme: route.Backend.Protocol,
