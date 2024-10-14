@@ -1,31 +1,32 @@
-routes:
-  - protocol: "http"
-    host: "host.docker.internal"
-    path: "/header"
-    StripPath: true
-    service: "meu-nginx"
-    port: 8081
-    ttl: 10
-    retry: 3
-    retryDelay: 5
-    healthPath: /
-    cors:
-      allowedOrigins:
-        - "http://host.docker.internal:9000"
-      allowedMethods:
-        - "GET"
-cors:
-  allowedOrigins:
-    - "*"
-  allowedMethods:
-    - "GET"
-    - "POST"
-    - "PUT"
-    - "DELETE"
-  allowedHeaders:
-    - "Authorization"
-    - "Content-Type"
-  allowCredentials: true
-  exposedHeaders:
-    - "X-Custom-Header"
-  maxAge: 3600
+- host: host.docker.internal
+  cors:
+    allowedOrigins:
+      - "http://host.docker.internal"
+    allowedMethods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+    allowedHeaders:
+      - "Authorization"
+      - "Content-Type"
+    allowCredentials: true
+    exposedHeaders:
+      - "X-Custom-Header"
+    maxAge: 3600
+  routes:
+    - path: /my-app-route
+      stripPath: true
+      ttl: 3
+      backend:
+        protocol: "http"
+        host: "host.docker.internal"
+        port: 8002
+        containerName: "my-app-container-name"
+      retry:
+        attempts: 3
+        period: 5
+      livenessProbe:
+        path: healthcheck
+        successThreshold: 1
+        initialDelaySeconds: 3
