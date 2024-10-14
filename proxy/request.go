@@ -17,28 +17,18 @@ package proxy
 
 import (
 	"api-gateway-knative-docker/config"
-	"api-gateway-knative-docker/cors"
 	"api-gateway-knative-docker/docker"
 	"api-gateway-knative-docker/docker/container_store"
+	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
-func HandleRequest(route config.Route, corsGlobal *cors.CORSConfig) http.HandlerFunc {
+func HandleRequest(route config.RouteConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		isAllowed := true
-		if route.CORS != nil {
-			isAllowed = cors.ResolveCors(w, r, route.CORS) // set CORS headers
-		} else if corsGlobal != nil {
-			isAllowed = cors.ResolveCors(w, r, corsGlobal) // set CORS headers
-		}
-
-		if !isAllowed {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		if route.Protocol == "" {
+		if route.Backend.Protocol == "" {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -48,7 +38,7 @@ func HandleRequest(route config.Route, corsGlobal *cors.CORSConfig) http.Handler
 			return
 		}
 
-		containerService, exists := container_store.GetByContainerName(route.ContainerName)
+		containerService, exists := container_store.GetByContainerName(route.Backend.ContainerName)
 
 		if !exists {
 			w.WriteHeader(http.StatusNotFound)
@@ -63,11 +53,12 @@ func HandleRequest(route config.Route, corsGlobal *cors.CORSConfig) http.Handler
 			}
 		}
 
+		log.Printf("Último acesso ao container do serviço %s atualizado.", route.Backend.ContainerName)
 		container_store.UpdateAccessTime(containerService.ID)
 
 		serviceURL := &url.URL{
-			Scheme: route.Protocol,
-			Host:   route.Host + ":" + route.Port,
+			Scheme: route.Backend.Protocol,
+			Host:   fmt.Sprintf("%s:%d", route.Backend.Host, route.Backend.Port),
 		}
 
 		// Strip the route path from the request

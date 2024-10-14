@@ -17,7 +17,6 @@ package main
 
 import (
 	"api-gateway-knative-docker/config"
-	"api-gateway-knative-docker/cors"
 	"api-gateway-knative-docker/docker"
 	"api-gateway-knative-docker/proxy"
 	"log"
@@ -33,9 +32,25 @@ func main() {
 
 	// Defina um manipulador padrão para "/"
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		route := config.GetRouteStore().GetRouteByPath(r.URL.Path)
+		routeConfig, exists := config.GetHostStore().GetRoute(r.Host, r.URL.Path)
 
-		proxy.HandleRequest(route, cors.GetCorsStore().Get())(w, r)
+		if !exists {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		corsConfig, exists := config.GetHostStore().GetCORS(r.Host)
+
+		if exists {
+			isAllowed := config.ResolveCors(w, r, corsConfig)
+
+			if !isAllowed {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+		}
+
+		proxy.HandleRequest(routeConfig)(w, r)
 	})
 
 	go docker.CheckContainersActive()

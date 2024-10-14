@@ -17,44 +17,55 @@ package docker
 
 import (
 	"api-gateway-knative-docker/config"
-	"api-gateway-knative-docker/docker/container_store"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 )
 
-func checkHealth(route config.Route) bool {
+// checkHealth realiza o healthcheck para uma rota específica usando Retry e Liveness Probe.
+func checkHealth(route config.RouteConfig) bool {
 	client := &http.Client{
-		Timeout: time.Duration(route.RetryDelay) * time.Second, // Defina um timeout adequado
+		Timeout: time.Duration(route.Retry.Period) * time.Second,
 	}
 
-	log.Printf("Verificando healthcheck para o serviço: %s", route.ContainerName)
-	for i := 0; i < route.Retry; i++ {
-		resp, err := client.Get("http://host.docker.internal:" + route.Port + route.HealthPath)
+	// Extrair configuração do Liveness Probe
+	liveness := route.LivenessProbe
+	url := fmt.Sprintf("%s://%s:%d/%s", route.Backend.Protocol, route.Backend.Host, route.Backend.Port, route.LivenessProbe.Path)
+
+	log.Printf("Verificando healthcheck para o serviço: %s", route.Backend.ContainerName)
+
+	// Espera inicial definida no Liveness Probe
+	if liveness.InitialDelaySeconds > 0 {
+		log.Printf("Aguardando %d segundos antes do healthcheck inicial...", liveness.InitialDelaySeconds)
+		time.Sleep(time.Duration(liveness.InitialDelaySeconds) * time.Second)
+	}
+
+	// Tentativas definidas no RetryConfig
+	for attempt := 1; attempt <= route.Retry.Attempts; attempt++ {
+		resp, err := client.Get(url)
+
+		// Verificação de sucesso
 		if err == nil && resp.StatusCode == http.StatusOK {
-			log.Printf("Healthcheck bem-sucedido para o serviço: %s na tentativa %d", route.ContainerName, i+1)
+			log.Printf("Healthcheck bem-sucedido para %s na tentativa %d",
+				route.Backend.ContainerName, attempt)
 			return true
 		}
 
-		log.Printf("Tentativa %d de healthcheck falhou para o serviço: %s, erro: %v", i+1, route.ContainerName, err)
+		log.Printf("Tentativa %d falhou para %s, erro: %v",
+			attempt, route.Backend.ContainerName, err)
 
-		// Se não for a última tentativa, aguarde antes de tentar novamente
-		if i < route.Retry-1 {
-			time.Sleep(time.Duration(route.RetryDelay) * time.Second)
+		// Se não for a última tentativa, aguarde o período de retry
+		if attempt < route.Retry.Attempts {
+			log.Printf("Aguardando %d segundos antes da próxima tentativa...", route.Retry.Period)
+			time.Sleep(time.Duration(route.Retry.Period) * time.Second)
 		}
 	}
 
-	log.Printf("Healthcheck falhou para o serviço: %s após %d tentativas.", route.ContainerName, route.Retry)
-	return false
-}
+	// Se todas as tentativas falharem, aguardar o período de tolerância para término (grace period)
+	log.Printf("Healthcheck falhou para %s após %d tentativas. Aguardando %d segundos antes de finalizar...",
+		route.Backend.ContainerName, route.Retry.Attempts, route.TTL)
 
-// getServiceForContainer é um placeholder para obter o serviço associado ao containerID
-// (Você precisaria implementar isso com base no seu store)
-func getServiceForContainer(containerID string) string {
-	container, exists := container_store.GetByID(containerID)
-	if exists {
-		return container.ContainerName
-	}
-	log.Printf("Não foi possível encontrar o serviço para o container %s", containerID)
-	return ""
+	time.Sleep(time.Duration(route.TTL) * time.Second)
+	return false
 }

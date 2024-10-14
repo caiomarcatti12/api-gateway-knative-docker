@@ -17,7 +17,6 @@
 package config
 
 import (
-	"api-gateway-knative-docker/cors"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -43,22 +42,20 @@ func LoadConfig() error {
 		return err
 	}
 
-	var config Config
-	err = yaml.Unmarshal(configFile, &config)
+	var configs []HostConfig
+	err = yaml.Unmarshal(configFile, &configs)
 	if err != nil {
 		return err
 	}
 
-	if len(config.Routes) == 0 {
-		return errors.New("No routes found in the config file")
+	if len(configs) == 0 {
+		return errors.New("No hosts found in the config file")
 	}
 
 	// Populando o RouteStore com as rotas carregadas
-	for _, route := range config.Routes {
-		GetRouteStore().Add(route)
+	for _, config := range configs {
+		GetHostStore().AddHost(config)
 	}
-
-	cors.GetCorsStore().Add(config.CORS)
 
 	return nil
 }
