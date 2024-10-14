@@ -98,6 +98,9 @@ func StartContainer(route config.RouteConfig) (bool, error) {
 
 	log.Printf("Healthcheck bem-sucedido para o container: %s", route.Backend.ContainerName)
 
+	log.Printf("Último acesso ao container do serviço %s atualizado.", route.Backend.ContainerName)
+	container_store.UpdateAccessTime(containerService.ID)
+
 	return true, nil
 }
 
